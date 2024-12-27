@@ -78,7 +78,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            HelloWorldTheme {
+            HelloWorldTheme(
+                darkTheme = false,
+                dynamicColor = false
+            ) {
                 SwipeDemonstration()
             }
         }
@@ -281,19 +284,14 @@ fun SwipeDemonstration(modifier: Modifier = Modifier) {
                         (screenWidth.toFloat() / internalState) < 2f
                         }
                     }
-                    var job: Job? = null
+                    var isWeNeedToRemove by remember { mutableStateOf(false) }
                     Box(
                        modifier =  Modifier
 
                     ) {
                         Box(modifier = Modifier.matchParentSize(), contentAlignment = Alignment.CenterStart) {
                             TextButton(onClick = {
-                                if(job != null) {
-                                    Log.d(TAG, "SwipeDemonstration: job canceled")
-                                    job?.cancel()
-                                }else {
-                                    Log.d(TAG, "SwipeDemonstration: job doesn't exits!")
-                                }
+                                isWeNeedToRemove = false
                                 internalState = 0f
                             }) {
                               Text("UNDO")
@@ -309,10 +307,15 @@ fun SwipeDemonstration(modifier: Modifier = Modifier) {
                                         onDragEnd = {
                                             if (isSwapped) {
                                                 internalState += 999f
-                                                job = coroutineScope.launch {
-                                                    Log.d(TAG, "SwipeDemonstration: we are running!")
+                                                isWeNeedToRemove = true
+                                                coroutineScope.launch {
                                                     delay(4000)
-                                                    ourMutableListState.remove(it)
+                                                    if(isWeNeedToRemove) {
+                                                        println("element removed!")
+                                                        ourMutableListState.remove(it)
+                                                    }else {
+                                                        println("element removing canceled")
+                                                    }
                                                 }
                                             } else {
                                                 internalState = 0f
@@ -321,11 +324,11 @@ fun SwipeDemonstration(modifier: Modifier = Modifier) {
                                     ) { change, dragAmount ->
                                         change.consume()
                                         if (internalState + dragAmount > 0)
-                                            internalState += dragAmount.coerceIn(-6f, 6f)
+                                            internalState += dragAmount.coerceIn(-8f, 8f)
                                     }
                                 }
                             ,
-                            colors = ListItemDefaults.colors(containerColor = Color.Gray),
+                            colors = ListItemDefaults.colors(containerColor = Color(0xffeeeeee)),
                             headlineContent = {
                                 Text("Item $it")
                             }
